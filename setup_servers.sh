@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#####
+DOCKER_USER="rmunayco"
+REPO_NAME="exam_final"
+IMAGE_TAG="$DOCKER_USER/$REPO_NAME:latest"
+#####
+
 cat <<EOF > Dockerfile
 FROM alpine:3.19
 
@@ -32,15 +38,33 @@ CMD vsftpd /etc/vsftpd/vsftpd.conf & \
     in.tftpd --foreground --listen --address 0.0.0.0:69 --secure /var/tftpboot
 EOF
 
+
+###############
+echo "=== 2. Contruyendo la imagen con el tag del repositorio ==="
+
+docker build -t "$IMAGE_TAG" . 
+
+echo "=== 3. Autemticacion en Docker Repository ==="
+
+read -sp "Introduce tu Docker  Hub Token: " DOCKER_TOKEN
+echo ""
+echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
+
+echo "=== 4. Subiendo imagen a Docker Hub (push) ==="
+
+docker push "$IMAGE_TAG"
+
+
+
+
 docker build -t triple-proto-server .
 
-docker run -d --name repo-server \
-   -p 21:21 \
-   -p 2222:22 \
-   -p 69:69/udp \
-    triple-proto-server
+docker run -d --name repo-server  -p 21:21 -p 69:69 -p 2222:22  "$IMAGE_TAG"
+
 
 echo "Services started:"
 echo "FTP: loaclhost:21 (Anon or admin/admin)"
 echo "SFTP: localhost:2222 (admin/admin)"
 echo "TFTP: localhost:69 (UDP, Anonymous)" 
+
+
