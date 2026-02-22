@@ -1,0 +1,23 @@
+---
+- name: Backup de Configuracion CSR
+  hosts: routers
+  gather_facts: no
+
+
+  tasks:
+    - name: Obtener running-config
+      cisco.ios.ios_command:
+        commands: show running-config
+      register: config_output
+
+    - name: Asegurar que existe la carpeta de backups
+      file:
+        path: ./backups
+        state: directory
+      delegate_to: localhost 
+
+    - name: Guardar en archivo local
+      copy:
+        content: "{{ config_output.stdout[0] }}"
+        dest: "./backups/config_router.txt"
+      delegate_to: localhost
